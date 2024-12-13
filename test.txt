@@ -1,0 +1,132 @@
+var jsonData = pm.response.json().Data;
+
+pm.test("Validate Response Code", function() {
+    pm.response.to.have.status(200);
+});
+
+function returnNullIfAny(value) {
+    return value ? value.substring(0,10) : null;
+}
+
+function returnEmptyIfAny(value) {
+    return value ? value.substring(0,5) : '';
+}
+
+function returnDate(value) {
+    return value ? value.substring(0, 23) + "Z" : value;
+}
+
+function upperCaseFirstLetter(string){
+    return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+var validationTests = [
+    { name: 'reference', transform: val => val.toString() },
+    { name: 'ssn', transform: val => val.toString()},
+    { name: 'fullName' },
+    { name: 'firstName' },
+    { name: 'lastName' },
+    { name: 'gender', transform: returnNullIfAny},
+    { name: 'dateOfBirth', transform: returnNullIfAny },
+    { name: 'keyAccountManager', transform: returnEmptyIfAny },
+    { name: 'createdAt', transform: returnDate },
+    { name: 'updatedAt', transform: returnDate },
+    { name: 'type' },
+    { name: 'source' },
+    { name: 'status' },
+    { name: 'distributionMethod' },
+    { name: 'preferLanguage' },
+    { name: 'preferredCommunication' },
+    { name: 'country' },
+    { name: 'hasMarketingInfo', transform: val => val.toLowerCase() === 'true' }
+];
+
+validationTests.forEach(test => {
+    var formatName = test.name !== 'ssn' ? upperCaseFirstLetter(test.name) : test.name.toUpperCase();    
+    pm.test(`Validate ${formatName}`, function() {
+        var actualValue = jsonData[formatName];
+        var expectedValue = pm.variables.get(test.name);        
+        if (test.transform) {
+            expectedValue = test.transform(expectedValue);
+        }        
+        pm.expect(expectedValue).to.eql(actualValue);
+    });
+});
+
+function validateArrayCustomFields(variableName, fields) {
+    var jsonFieldName = upperCaseFirstLetter(variableName)
+    pm.test(`Validate ${jsonFieldName}`, function() {
+        var jsonDataArray = jsonData.jsonFieldName;
+        var variableData = JSON.parse(pm.variables.get(variableName));        
+        if (variableData === '{}') {
+            pm.expect(jsonDataArray).to.eql('{}');
+        } else {
+            for(let i=0; i<variableData.length;i++){
+                fields.forEach(field => {
+                    let expectedValue = variableData.field.name;
+                    if (field.transform) {
+                        expectedValue = field.transform(expectedValue);
+                    }
+                    pm.expect(expectedValue).to.eql(jsonDataArray[i][upperCaseFirstLetter(field.name)]);
+                });
+            }
+        }
+    });
+}
+
+validateArrayCustomFields('customFields', [
+    { name: 'PEP', transform: val => val === 'true' },
+    { name: 'deceased', transform: val => val === 'true' },
+    { name: 'nationality' },
+    { name: 'paymentOption' },
+    { name: 'citizenship'},
+    { name: 'personType' },
+    { name: 'companyType'}
+]);
+
+function validateArrayTest(variableName, fields) {
+    var jsonFieldName = upperCaseFirstLetter(variableName)
+    pm.test(`Validate ${jsonFieldName}`, function() {
+        const jsonDataArray = jsonData[jsonFieldName];
+        const variableData = JSON.parse(pm.variables.get(variableName));
+        
+        if (variableData === '[]') {
+            pm.expect(jsonDataArray).to.eql('[]');
+        } else {
+            variableData.forEach((item, i) => {
+                fields.forEach(field => {
+                    let expectValue = item[field.name];
+                    if (field.transform) {
+                        expectValue = field.transform(expectValue);
+                    }
+                    pm.expect(expectValue).to.eql(jsonDataArray[i][upperCaseFirstLetter(field.name)]);
+                });
+            });
+        }
+    });
+}
+
+validateArrayTest('phones', [
+    { name: 'number' },
+    { name: 'type'},
+    { name: 'createdAt', transform: returnDate },
+    { name: 'updatedAt', transform: returnDate }
+]);
+
+validateArrayTest('emails', [
+    { name: 'address' },
+    { name: 'type' },
+    { name: 'createdAt', transform: returnDate },
+    { name: 'updatedAt', transform: returnDate }
+]);
+
+validateArrayTest('addresses', [
+    { name: 'address' },
+    { name: 'city'},
+    { name: 'postCode' },
+    { name: 'type' },
+    { name: 'extraAddress'},
+    { name: 'country' },
+    { name: 'createdAt', transform: returnDate },
+    { name: 'updatedAt', transform: returnDate }
+]);

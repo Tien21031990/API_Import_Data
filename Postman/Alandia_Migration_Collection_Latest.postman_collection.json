@@ -1,0 +1,989 @@
+{
+	"info": {
+		"_postman_id": "a5baf2df-4959-47ab-a9d2-6f5360e0432b",
+		"name": "Alandia_Migration_Collection_Latest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40139895"
+	},
+	"item": [
+		{
+			"name": "AccountSummaryReport",
+			"item": [
+				{
+					"name": "Account Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().Data;\r",
+									"\r",
+									"pm.test(\"Validate Response Code\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"function returnNullIfAny(value) {\r",
+									"    if (value.length !== 0) {\r",
+									"        value = value.substring(0, 10);\r",
+									"    } else if (value.length === 0 && value !== 'keyAccountManager') {\r",
+									"        value = null;\r",
+									"    } else {\r",
+									"        value = \"\";\r",
+									"    }\r",
+									"    return value;\r",
+									"}\r",
+									"\r",
+									"function returnEmptyIfAny(value) {\r",
+									"    if (value.length === 0) {\r",
+									"        value = \"\";\r",
+									"    } \r",
+									"    return value;\r",
+									"}\r",
+									"\r",
+									"function returnDate(value) {\r",
+									"    return value ? value.substring(0, 23) + \"Z\" : value;\r",
+									"}\r",
+									"\r",
+									"const validationTests = [\r",
+									"    { name: 'reference', transform: val => val.toString() },\r",
+									"    { name: 'ssn', transform: val => val.toString()},\r",
+									"    { name: 'fullName' },\r",
+									"    { name: 'firstName' },\r",
+									"    { name: 'lastName' },\r",
+									"    { name: 'gender', transform: returnNullIfAny},\r",
+									"    { name: 'dateOfBirth', transform: returnNullIfAny },\r",
+									"    { name: 'keyAccountManager', transform: returnEmptyIfAny },\r",
+									"    { name: 'createdAt', transform: returnDate },\r",
+									"    { name: 'updatedAt', transform: returnDate },\r",
+									"    { name: 'type' },\r",
+									"    { name: 'source' },\r",
+									"    { name: 'status' },\r",
+									"    { name: 'distributionMethod' },\r",
+									"    { name: 'preferLanguage' },\r",
+									"    { name: 'preferredCommunication' },\r",
+									"    { name: 'country' },\r",
+									"    { name: 'hasMarketingInfo', transform: val => val.toLowerCase() === 'true' }\r",
+									"];\r",
+									"\r",
+									"validationTests.forEach(test => {\r",
+									"    const formatName = test.name !== 'ssn' ? upperCaseFirstLetter(test.name) : test.name.toUpperCase();\r",
+									"    \r",
+									"    pm.test(`Validate ${formatName}`, function() {\r",
+									"        const expectedValue = jsonData[formatName.replace(/ /g, '')];\r",
+									"        let actualValue = pm.variables.get(test.name);\r",
+									"        \r",
+									"        if (test.transform) {\r",
+									"            actualValue = test.transform(actualValue);\r",
+									"        }\r",
+									"        \r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"\r",
+									"function validateArrayCustomFields(variableName, jsonFieldName, fields) {\r",
+									"    pm.test(`Validate ${jsonFieldName}`, function() {\r",
+									"        const jsonDataArray = jsonData[jsonFieldName];\r",
+									"        const variableData = pm.variables.get(variableName);\r",
+									"        \r",
+									"        if (variableData === '{}') {\r",
+									"            pm.expect(jsonDataArray).to.eql('{}');\r",
+									"        } else {\r",
+									"            const parsedData = JSON.parse(variableData);\r",
+									"            console.log(parsedData)\r",
+									"            for(let i=0; i<parsedData.length;i++){\r",
+									"                fields.forEach(field => {\r",
+									"                    let actualValue = parsedData.field.name;\r",
+									"                    if (field.transform) {\r",
+									"                        actualValue = field.transform(actualValue);\r",
+									"                    }\r",
+									"                    pm.expect(actualValue).to.eql(jsonDataArray[i][upperCaseFirstLetter(field.name)]);\r",
+									"                });\r",
+									"            }\r",
+									"        }\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"validateArrayCustomFields('customFields', 'CustomFields', [\r",
+									"    { name: 'PEP', transform: val => val === 'true' },\r",
+									"    { name: 'deceased', transform: val => val === 'true' },\r",
+									"    { name: 'nationality' },\r",
+									"    { name: 'paymentOption' },\r",
+									"    { name: 'citizenship'},\r",
+									"    { name: 'personType' },\r",
+									"    { name: 'companyType'}\r",
+									"]);\r",
+									"\r",
+									"function upperCaseFirstLetter(string){\r",
+									"    return string.charAt(0).toUpperCase() + string.slice(1)\r",
+									"}\r",
+									"\r",
+									"function validateArrayTest(variableName, jsonFieldName, fields) {\r",
+									"    pm.test(`Validate ${jsonFieldName}`, function() {\r",
+									"        const jsonDataArray = jsonData[jsonFieldName];\r",
+									"        const variableData = pm.variables.get(variableName);\r",
+									"        \r",
+									"        if (variableData === '[]') {\r",
+									"            pm.expect(jsonDataArray).to.eql('[]');\r",
+									"        } else {\r",
+									"            const parsedData = JSON.parse(variableData);\r",
+									"            parsedData.forEach((item, i) => {\r",
+									"                fields.forEach(field => {\r",
+									"                    let actualValue = item[field.name];\r",
+									"                    if (field.transform) {\r",
+									"                        actualValue = field.transform(actualValue);\r",
+									"                    }\r",
+									"                    pm.expect(actualValue).to.eql(jsonDataArray[i][upperCaseFirstLetter(field.name)]);\r",
+									"                });\r",
+									"            });\r",
+									"        }\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"validateArrayTest('phones', 'Phones', [\r",
+									"    { name: 'number' },\r",
+									"    { name: 'type'},\r",
+									"    { name: 'createdAt', transform: returnDate },\r",
+									"    { name: 'updatedAt', transform: returnDate }\r",
+									"]);\r",
+									"\r",
+									"validateArrayTest('emails', 'Emails', [\r",
+									"    { name: 'address' },\r",
+									"    { name: 'type' },\r",
+									"    { name: 'createdAt', transform: returnDate },\r",
+									"    { name: 'updatedAt', transform: returnDate }\r",
+									"]);\r",
+									"\r",
+									"validateArrayTest('addresses', 'Addresses', [\r",
+									"    { name: 'address' },\r",
+									"    { name: 'city'},\r",
+									"    { name: 'postCode' },\r",
+									"    { name: 'type' },\r",
+									"    { name: 'extraAddress'},\r",
+									"    { name: 'country' },\r",
+									"    { name: 'createdAt', transform: returnDate },\r",
+									"    { name: 'updatedAt', transform: returnDate }\r",
+									"]);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/customer/api/v1/customers/{{accountId}}",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"customer",
+								"api",
+								"v1",
+								"customers",
+								"{{accountId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "OrganizationSummaryReport",
+			"item": [
+				{
+					"name": "Organization Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().data;\r",
+									"\r",
+									"// Reusable function to validate simple key-value pairs\r",
+									"function validateField(variableName, jsonPath, transformFn = (x) => x) {\r",
+									"    pm.test(`Validate ${variableName}`, function() {\r",
+									"        const expectedValue = transformFn(jsonData[jsonPath]);\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Reusable function for handling optional fields (null if empty)\r",
+									"function returnNullIfAny(variableName) {\r",
+									"    const value = pm.variables.get(variableName);\r",
+									"    return value.length === 0 ? null : value;\r",
+									"}\r",
+									"\r",
+									"// Check Response Code\r",
+									"pm.test(\"Check Response Code\", function(){\r",
+									"    pm.expect(pm.response).to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Validate fields using the validateField function for simplicity\r",
+									"validateField('Name', 'attributes.name');\r",
+									"validateField('Description', 'attributes.description');\r",
+									"validateField('Address', 'attributes.address');\r",
+									"validateField('City', 'attributes.city');\r",
+									"validateField('OrganizationNumber', 'attributes.organizationNumber');\r",
+									"validateField('Postcode', 'attributes.postcode', (value) => value.toString());\r",
+									"validateField('LanguageCode', 'attributes.languageCode');\r",
+									"validateField('SalesCommission', 'attributes.salesCommission');\r",
+									"validateField('RenewalSalesCommission', 'attributes.renewalSalesCommission');\r",
+									"\r",
+									"// Validate fields that require custom handling (like null checks or transformations)\r",
+									"pm.test(\"Validate Email\", function() {\r",
+									"    pm.expect(returnNullIfAny('Email')).to.eql(jsonData.attributes.email);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validate PhoneNumber\", function() {\r",
+									"    pm.expect(returnNullIfAny('PhoneNumber')).to.eql(jsonData.attributes.phoneNumber);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validate IsCommissionAllowed\", function() {\r",
+									"    pm.expect(pm.variables.get('IsCommissionAllowed').toString().toLowerCase()).to.eql(jsonData.attributes.isCommissionAllowed.toString());\r",
+									"});\r",
+									"\r",
+									"// TODO: Placeholder validations (Uncomment when data is available)\r",
+									"pm.test(\"TODO Validate Id\", function(){\r",
+									"    // pm.expect(pm.variables.get('Id')).to.eql(jsonData.relationships.users.data[0].id);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"TODO Validate TenantId\", function(){\r",
+									"    // pm.expect(pm.variables.get('TenantId')).to.eql(jsonData.attributes.tenantId);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"TODO Validate ParentOrganizationId\", function(){\r",
+									"    // pm.expect(pm.variables.get('ParentOrganizationId')).to.eql(jsonData.attributes.parentOrganizationId);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/vnd.api+json"
+							},
+							{
+								"key": "accept-language",
+								"value": "en"
+							},
+							{
+								"key": "authorization",
+								"value": "Bearer eyJraWQiOiJRbWltRHFnWnVTNWE5eHgzOVRsRWg5eUJxY1l5eEVwNzZYSkxvd0k2UkpzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxOTAxZTU5Ny1kY2I5LTQ1NzUtODllZC01ZmYzMmRhNzlhYWQiLCJkZXZpY2Vfa2V5IjoiZXUtd2VzdC0yX2FkNGFmMDA1LTFiN2UtNGZiOC04OGYyLTAzZTdjYjJjZjg5MyIsImNvZ25pdG86Z3JvdXBzIjpbIm1pZ3JhdGlvbjEtc3RhZ2luZyJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9IMHJ4Z01VVlEiLCJjbGllbnRfaWQiOiIzYTVibXE5ZmRyZGthNXA4cmplZDhqa2wwMCIsIm9yaWdpbl9qdGkiOiI0NzE1MjIwOC1iNjFiLTRlZGMtOTk1YS1hMDQ5ZjhmZWNmZWMiLCJldmVudF9pZCI6ImQ5MGZmMDhhLTFiYzYtNGE4NS1iNjAzLTU5OTVkYTM4YWE4NiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjcxNDc4MjYsImV4cCI6MTcyNzIzNDIyNiwiaWF0IjoxNzI3MTQ3ODI2LCJqdGkiOiI4MjIyYWEyYS1kYWMyLTRhYTgtYTYwOS1mNDdiMDY1ODU2MWUiLCJ1c2VybmFtZSI6InNvZmlhLm5ndXllbkBtaWdyYXRpb24xLXN0YWdpbmcifQ.1h1yeUlhN4z5o8_liVJq2YqXRzr8LBS4U-cDwXlxFgTiVtqB411Vgkw5lfgis01Kbyc6T3FhXnjYbjTts9YrVhbG1HvfMdziw-HwX876F4Pl18U2MiDUAn65Sdu_V48imr0Y6jtjhE1cJegyAwUtIeZXGlzguj3-At0TC1GQhQPuateRQP8-X8uzHONo5IPqClFmBTMuvDhftkIdAd28c7Efw6F24zznTTo4_bVEvYBHzRs3QtuzTugxY9-0cEsxAhXM40bfP5yqJg2tTAu7umNpZ6osoknh_cORHrCvuvVZFlsY_SFMXZoJImTKJgxUk-vGIKqe9RXrC66gkfWebA"
+							},
+							{
+								"key": "cache-control",
+								"value": "no-cache"
+							},
+							{
+								"key": "content-type",
+								"value": "application/vnd.api+json"
+							},
+							{
+								"key": "origin",
+								"value": "https://app.staging.contemisaasdev.com"
+							},
+							{
+								"key": "pragma",
+								"value": "no-cache"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Chromium\";v=\"128\", \"Not;A=Brand\";v=\"24\", \"Google Chrome\";v=\"128\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Windows\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-site"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/users/api/v1/organizations/{{organizationId}}?include=users.roles",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"users",
+								"api",
+								"v1",
+								"organizations",
+								"{{organizationId}}"
+							],
+							"query": [
+								{
+									"key": "include",
+									"value": "users.roles"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "NoteSummaryReport",
+			"item": [
+				{
+					"name": "Note Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().Data;\r",
+									"\r",
+									"// Reusable function for validating simple key-value pairs\r",
+									"function validateField(variableName, jsonPath, transformFn = (x) => x) {\r",
+									"    pm.test(`Validate ${variableName}`, function() {\r",
+									"        const expectedValue = transformFn(jsonData[jsonPath]);\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Function to validate related records (handles the empty array case)\r",
+									"function validateRelatedRecords(variableName, jsonPath) {\r",
+									"    pm.test(\"Validate Related records\", function() {\r",
+									"        const columnValue = pm.variables.get(variableName);\r",
+									"        if (columnValue === '[]') {\r",
+									"            pm.expect(jsonData[jsonPath]).to.eql('[]');\r",
+									"        } else {\r",
+									"            const parsedValue = JSON.parse(columnValue);\r",
+									"            parsedValue.forEach((item, index) => {\r",
+									"                pm.expect(item.referenceId.toString()).to.eql(jsonData[jsonPath][index].ReferenceId);\r",
+									"                pm.expect(item.referenceType).to.eql(jsonData[jsonPath][index].ReferenceType);\r",
+									"            });\r",
+									"        }\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Helper function for formatting date strings\r",
+									"function formatDate(date) {\r",
+									"    return date.substring(0, 23) + \"Z\";\r",
+									"}\r",
+									"\r",
+									"// Check Response Code\r",
+									"pm.test(\"Check API Response Code\", function(){\r",
+									"    pm.expect(pm.response).to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Validate Fields\r",
+									"validateField('header', 'Header');\r",
+									"validateField('body', 'Body');\r",
+									"validateField('createdBy', 'CreatedBy');\r",
+									"validateField('createdAt', 'CreatedAt', formatDate);\r",
+									"validateField('updatedAt', 'UpdatedAt', formatDate);\r",
+									"\r",
+									"// Validate Related Records\r",
+									"validateRelatedRecords('noteRelatedRecords', 'NoteRelatedRecords');\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5"
+							},
+							{
+								"key": "authorization",
+								"value": "Bearer eyJraWQiOiJRbWltRHFnWnVTNWE5eHgzOVRsRWg5eUJxY1l5eEVwNzZYSkxvd0k2UkpzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxOTAxZTU5Ny1kY2I5LTQ1NzUtODllZC01ZmYzMmRhNzlhYWQiLCJkZXZpY2Vfa2V5IjoiZXUtd2VzdC0yXzAzNjQyNWJlLTBjNTktNDg1Zi05OTNjLTVjYjYyN2NhMzI2MCIsImNvZ25pdG86Z3JvdXBzIjpbIm1pZ3JhdGlvbjEtc3RhZ2luZyJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9IMHJ4Z01VVlEiLCJjbGllbnRfaWQiOiIzYTVibXE5ZmRyZGthNXA4cmplZDhqa2wwMCIsIm9yaWdpbl9qdGkiOiJkNWNlZTE1Yy1jMTM5LTRkNGEtODBiOC00ODU4MjNlM2NjNDIiLCJldmVudF9pZCI6IjJlYmE1YmZlLTFiMjgtNDIxZC05ZTExLTNhNGM1ZWYxZmM4YiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjcyNTA4OTEsImV4cCI6MTcyNzMzNzI5MSwiaWF0IjoxNzI3MjUwODkxLCJqdGkiOiI3MTYzYTVjZS02YTFiLTQ5MzgtYjdlOC1jYjEzZDBiMzFmZDMiLCJ1c2VybmFtZSI6InNvZmlhLm5ndXllbkBtaWdyYXRpb24xLXN0YWdpbmcifQ.g5y5DQ2TVOUL4yOMuTTGAiMVF3jCgADqYjw9pPMGHupY4XNUmsQNX_cLmmAEYUNLEWsWG9_0oXS9KMyudGgGse3-sOESLDJGQSLxty-7IuRHlkBtNr5RPCKP2S1QImNRDS219bfoBd_5xXJG2dqMt9NvPN11AphZRWRaqPn13dwzO5f5DyXOYvtVclz_wb186xGGl3c5bBif2cG5RPqhIhkAjLIUHPCD6JxE7xeuiS_lKrj3VqBp_pXcZKsMeVMA97czb2Obxrqc8ECawj9QPnPJIsRMfp1Nl25r0pBWOjhI58BU_DgmzHx1WpOAjEFXVcqPYkozHrfHkPImQ-O-fw"
+							},
+							{
+								"key": "origin",
+								"value": "https://app.staging.contemisaasdev.com"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Google Chrome\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Windows\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-site"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+							},
+							{
+								"key": "x-apikey",
+								"value": "c5b72f3a7b009a9af3874f556f8e0a6330a16a35"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/task/api/v1/notes/{{noteId}}",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"task",
+								"api",
+								"v1",
+								"notes",
+								"{{noteId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CaseSummarryReport",
+			"item": [
+				{
+					"name": "Case Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().data;\r",
+									"\r",
+									"// Reusable function for validating simple key-value pairs\r",
+									"function validateField(variableName, jsonPath, transformFn = (x) => x) {\r",
+									"    pm.test(`Check ${variableName}`, function() {\r",
+									"        const expectedValue = transformFn(jsonData[jsonPath]);\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Helper function for formatting date strings\r",
+									"function formatDate(date) {\r",
+									"    return date.substring(0, 23) + \"Z\";\r",
+									"}\r",
+									"\r",
+									"// Reusable function for validating related entities (handles the empty array case)\r",
+									"function validateRelatedEntities(variableName, jsonPath) {\r",
+									"    pm.test(\"Check Related Entities\", function() {\r",
+									"        const columnValue = pm.variables.get(variableName);\r",
+									"        if (columnValue === '[]') {\r",
+									"            pm.expect(jsonData[jsonPath]).to.eql('[]');\r",
+									"        } else {\r",
+									"            const parsedValue = JSON.parse(columnValue);\r",
+									"            parsedValue.forEach((item, index) => {\r",
+									"                pm.expect(pm.variables.get('customerReference').toString()).to.eql(jsonData[jsonPath][index].ReferenceId);\r",
+									"                pm.expect(\"account\").to.eql(jsonData[jsonPath][index].ReferenceType);\r",
+									"            });\r",
+									"        }\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Check Response Code\r",
+									"pm.test(\"Check The Response Code\", function() {\r",
+									"    pm.expect(pm.response).to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Validate Fields\r",
+									"validateField('title', 'title');\r",
+									"validateField('description', 'description');\r",
+									"validateField('type', 'type');\r",
+									"validateField('currentStatus', 'currentStatus');\r",
+									"validateField('contactReasonId', 'contactReason.id');\r",
+									"\r",
+									"// Validate Date Fields (with formatting)\r",
+									"validateField('dueDate', 'dueDate', formatDate);\r",
+									"validateField('createdAt', 'createdAt', formatDate);\r",
+									"validateField('updatedAt', 'updatedAt', formatDate);\r",
+									"\r",
+									"// Validate Related Entities\r",
+									"validateRelatedEntities('RelatedEntities', 'taskRelatedRecords');\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5"
+							},
+							{
+								"key": "authorization",
+								"value": "Bearer eyJraWQiOiJRbWltRHFnWnVTNWE5eHgzOVRsRWg5eUJxY1l5eEVwNzZYSkxvd0k2UkpzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxOTAxZTU5Ny1kY2I5LTQ1NzUtODllZC01ZmYzMmRhNzlhYWQiLCJkZXZpY2Vfa2V5IjoiZXUtd2VzdC0yXzAzNjQyNWJlLTBjNTktNDg1Zi05OTNjLTVjYjYyN2NhMzI2MCIsImNvZ25pdG86Z3JvdXBzIjpbIm1pZ3JhdGlvbjEtc3RhZ2luZyJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9IMHJ4Z01VVlEiLCJjbGllbnRfaWQiOiIzYTVibXE5ZmRyZGthNXA4cmplZDhqa2wwMCIsIm9yaWdpbl9qdGkiOiJkNWNlZTE1Yy1jMTM5LTRkNGEtODBiOC00ODU4MjNlM2NjNDIiLCJldmVudF9pZCI6IjJlYmE1YmZlLTFiMjgtNDIxZC05ZTExLTNhNGM1ZWYxZmM4YiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjcyNTA4OTEsImV4cCI6MTcyNzMzNzI5MSwiaWF0IjoxNzI3MjUwODkxLCJqdGkiOiI3MTYzYTVjZS02YTFiLTQ5MzgtYjdlOC1jYjEzZDBiMzFmZDMiLCJ1c2VybmFtZSI6InNvZmlhLm5ndXllbkBtaWdyYXRpb24xLXN0YWdpbmcifQ.g5y5DQ2TVOUL4yOMuTTGAiMVF3jCgADqYjw9pPMGHupY4XNUmsQNX_cLmmAEYUNLEWsWG9_0oXS9KMyudGgGse3-sOESLDJGQSLxty-7IuRHlkBtNr5RPCKP2S1QImNRDS219bfoBd_5xXJG2dqMt9NvPN11AphZRWRaqPn13dwzO5f5DyXOYvtVclz_wb186xGGl3c5bBif2cG5RPqhIhkAjLIUHPCD6JxE7xeuiS_lKrj3VqBp_pXcZKsMeVMA97czb2Obxrqc8ECawj9QPnPJIsRMfp1Nl25r0pBWOjhI58BU_DgmzHx1WpOAjEFXVcqPYkozHrfHkPImQ-O-fw"
+							},
+							{
+								"key": "origin",
+								"value": "https://app.staging.contemisaasdev.com"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Google Chrome\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Windows\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-site"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+							},
+							{
+								"key": "x-apikey",
+								"value": "c5b72f3a7b009a9af3874f556f8e0a6330a16a35"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/task/api/v2/tasks/{{taskId}}",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"task",
+								"api",
+								"v2",
+								"tasks",
+								"{{taskId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "CaseNoteSummarryReport",
+			"item": [
+				{
+					"name": "Case Note Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().Data;\r",
+									"\r",
+									"// Helper function for validating fields\r",
+									"function validateField(variableName, jsonPath, transformFn = (x) => x) {\r",
+									"    pm.test(`Check ${variableName}`, function() {\r",
+									"        const expectedValue = transformFn(jsonData[jsonPath]);\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Helper function to format date strings\r",
+									"function formatDate(date) {\r",
+									"    return date.substring(0, 23) + \"Z\";\r",
+									"}\r",
+									"\r",
+									"// Helper function to validate related entities\r",
+									"function validateRelatedEntities(variableName, jsonPath, referenceType) {\r",
+									"    pm.test(\"Check Related Entities\", function() {\r",
+									"        const columnValue = pm.variables.get(variableName);\r",
+									"        if (columnValue === '[]') {\r",
+									"            pm.expect(jsonData[jsonPath]).to.eql('[]');\r",
+									"        } else {\r",
+									"            const parsedValue = JSON.parse(columnValue);\r",
+									"            parsedValue.forEach((item, index) => {\r",
+									"                pm.expect(pm.variables.get('caseId').toString()).to.eql(jsonData[jsonPath][index].ReferenceId);\r",
+									"                pm.expect(referenceType).to.eql(jsonData[jsonPath][index].ReferenceType);\r",
+									"            });\r",
+									"        }\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Validate Response Code\r",
+									"pm.test(\"Check The Response Code\", function() {\r",
+									"    pm.expect(pm.response).to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Validate Case Note Fields\r",
+									"validateField('header', 'Header');\r",
+									"validateField('body', 'Body');\r",
+									"validateField('createdBy', 'CreatedBy');\r",
+									"validateField('createdAt', 'CreatedAt', formatDate);\r",
+									"validateField('updatedAt', 'UpdatedAt', formatDate);\r",
+									"\r",
+									"// Validate Related Entities\r",
+									"validateRelatedEntities('RelatedEntities', 'NoteRelatedRecords', \"task\");\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5"
+							},
+							{
+								"key": "authorization",
+								"value": "Bearer eyJraWQiOiJRbWltRHFnWnVTNWE5eHgzOVRsRWg5eUJxY1l5eEVwNzZYSkxvd0k2UkpzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxOTAxZTU5Ny1kY2I5LTQ1NzUtODllZC01ZmYzMmRhNzlhYWQiLCJkZXZpY2Vfa2V5IjoiZXUtd2VzdC0yXzAzNjQyNWJlLTBjNTktNDg1Zi05OTNjLTVjYjYyN2NhMzI2MCIsImNvZ25pdG86Z3JvdXBzIjpbIm1pZ3JhdGlvbjEtc3RhZ2luZyJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9IMHJ4Z01VVlEiLCJjbGllbnRfaWQiOiIzYTVibXE5ZmRyZGthNXA4cmplZDhqa2wwMCIsIm9yaWdpbl9qdGkiOiJkNWNlZTE1Yy1jMTM5LTRkNGEtODBiOC00ODU4MjNlM2NjNDIiLCJldmVudF9pZCI6IjJlYmE1YmZlLTFiMjgtNDIxZC05ZTExLTNhNGM1ZWYxZmM4YiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3MjcyNTA4OTEsImV4cCI6MTcyNzMzNzI5MSwiaWF0IjoxNzI3MjUwODkxLCJqdGkiOiI3MTYzYTVjZS02YTFiLTQ5MzgtYjdlOC1jYjEzZDBiMzFmZDMiLCJ1c2VybmFtZSI6InNvZmlhLm5ndXllbkBtaWdyYXRpb24xLXN0YWdpbmcifQ.g5y5DQ2TVOUL4yOMuTTGAiMVF3jCgADqYjw9pPMGHupY4XNUmsQNX_cLmmAEYUNLEWsWG9_0oXS9KMyudGgGse3-sOESLDJGQSLxty-7IuRHlkBtNr5RPCKP2S1QImNRDS219bfoBd_5xXJG2dqMt9NvPN11AphZRWRaqPn13dwzO5f5DyXOYvtVclz_wb186xGGl3c5bBif2cG5RPqhIhkAjLIUHPCD6JxE7xeuiS_lKrj3VqBp_pXcZKsMeVMA97czb2Obxrqc8ECawj9QPnPJIsRMfp1Nl25r0pBWOjhI58BU_DgmzHx1WpOAjEFXVcqPYkozHrfHkPImQ-O-fw"
+							},
+							{
+								"key": "origin",
+								"value": "https://app.staging.contemisaasdev.com"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Google Chrome\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Windows\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-site"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+							},
+							{
+								"key": "x-apikey",
+								"value": "c5b72f3a7b009a9af3874f556f8e0a6330a16a35"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/task/api/v1/notes/{{caseNoteId}}",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"task",
+								"api",
+								"v1",
+								"notes",
+								"{{caseNoteId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "IntroducerSummaryReport",
+			"item": [
+				{
+					"name": "Introducer Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let jsonData = pm.response.json().data;\r",
+									"\r",
+									"// Helper function for field validation\r",
+									"function validateField(jsonField, variableName, transformFn = (x) => x) {\r",
+									"    pm.test(`Validate ${variableName}`, function() {\r",
+									"        const expectedValue = transformFn(jsonData[jsonField]);\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Helper function for validating phone numbers with \"+\" prefix\r",
+									"function validatePhoneNumber(jsonField, variableName) {\r",
+									"    pm.test(`Validate ${variableName}`, function() {\r",
+									"        const expectedValue = jsonData[jsonField];\r",
+									"        const actualValue = pm.variables.get(variableName);\r",
+									"        pm.expect(actualValue).to.eql(expectedValue);\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Validate Response Code\r",
+									"pm.test(\"Validate Response Code\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Validate Fields with the generic validateField function\r",
+									"validateField('intermediaryEntity_name', 'IntroducerName');\r",
+									"validateField('intermediaryEntity_email', 'Email');\r",
+									"validateField('intermediaryEntity_address', 'Address');\r",
+									"validateField('intermediaryEntity_city', 'City');\r",
+									"validateField('intermediaryEntity_postcode', 'Postcode', (x) => x.toString());\r",
+									"validateField('intermediaryEntity_description', 'Description');\r",
+									"validateField('intermediaryEntity_salesCommission', 'SalesCommission');\r",
+									"validateField('data.intermediaryEntity_renewalSalesCommission', 'RenewalSalesCommission');\r",
+									"\r",
+									"// Validate Phone Number with specific logic for formatting\r",
+									"validatePhoneNumber('intermediaryEntity_phoneNumber', 'PhoneNumber');\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{ACCESS_TOKEN}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5"
+							},
+							{
+								"key": "authorization",
+								"value": "Bearer eyJraWQiOiJRbWltRHFnWnVTNWE5eHgzOVRsRWg5eUJxY1l5eEVwNzZYSkxvd0k2UkpzPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIxOTAxZTU5Ny1kY2I5LTQ1NzUtODllZC01ZmYzMmRhNzlhYWQiLCJkZXZpY2Vfa2V5IjoiZXUtd2VzdC0yXzQ3MTU0ODUyLWI0ZjctNDA0MS1hZmIzLWQxZGFkODY1NzNkYSIsImNvZ25pdG86Z3JvdXBzIjpbIm1pZ3JhdGlvbjEtc3RhZ2luZyJdLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAuZXUtd2VzdC0yLmFtYXpvbmF3cy5jb21cL2V1LXdlc3QtMl9IMHJ4Z01VVlEiLCJjbGllbnRfaWQiOiIzYTVibXE5ZmRyZGthNXA4cmplZDhqa2wwMCIsIm9yaWdpbl9qdGkiOiJiZjI1MzE5Zi1jMWFlLTRmOGEtOTVkYS0xZDM4ZGE0ZjQwMzgiLCJldmVudF9pZCI6IjcxZTViZTQwLTAyNTMtNDYwMS1iZjYyLWU1YjAxNDU3Yzc5MyIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3Mjg5NjcxNzksImV4cCI6MTcyOTA1MzU3OSwiaWF0IjoxNzI4OTY3MTc5LCJqdGkiOiIyZjUxNTA5MS0xZWI2LTRjMDQtYjQ1OC02NWQzMDVmNjcyYWMiLCJ1c2VybmFtZSI6InNvZmlhLm5ndXllbkBtaWdyYXRpb24xLXN0YWdpbmcifQ.KqJRx3NAUVVl_k4nc8ToJdX5DwqcUYIh3faE9qEKbYdQKWQhhFr63SZ3VN9Exm5eB_Urwkx7HySKIxpYKczGF1VbbLVMXeGIP-gR5OJgz-OBwdzsIWiwsz5g0qcLUuSd7DmwlRZg5___Pcx9746lcFZJWLqcnHG8i86tdiE2z_JnGZiJ5fn-MKRE8PwNqqb9jGKlXl_flOp81fyWwnTP0LWr66dFZzByiaC63wl_xotUVAKRBOzr43FSYAypMKOH_gkawQg4cPEhpYviFoHTiN_E7vMNL0JZc_9w1M2B_jOe6DEtaMHgBgyjPmyujQdC3wPqvY46a9hGpX047GofPg"
+							},
+							{
+								"key": "origin",
+								"value": "https://app.staging.contemisaasdev.com"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Google Chrome\";v=\"129\", \"Not=A?Brand\";v=\"8\", \"Chromium\";v=\"129\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Windows\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-site"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+							},
+							{
+								"key": "x-apikey",
+								"value": "ba221ed45fe0bfb0b70460fa51fae2dbf9ab2b58"
+							}
+						],
+						"url": {
+							"raw": "{{gateway}}/entity/api/v1/entities/{{orgId}}/records/{{introducerId}}",
+							"host": [
+								"{{gateway}}"
+							],
+							"path": [
+								"entity",
+								"api",
+								"v1",
+								"entities",
+								"{{orgId}}",
+								"records",
+								"{{introducerId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
